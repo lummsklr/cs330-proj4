@@ -47,6 +47,8 @@ import com.example.pj4test.databinding.FragmentCameraBinding
 import org.tensorflow.lite.task.vision.detector.Detection
 import java.time.Duration
 import java.time.LocalTime
+import android.os.Handler
+import android.os.Looper
 
 class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
     private val TAG = "CameraFragment"
@@ -71,12 +73,21 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
     private var isPaused: Boolean = true
     private lateinit var startTime: LocalTime
 
+    private lateinit var cameraProvider: ProcessCameraProvider
+    private lateinit var cameraSelector: CameraSelector
+    private var cnt: Int = 0
+    private lateinit var handler: Handler
+
     override fun onDestroyView() {
         _fragmentCameraBinding = null
         super.onDestroyView()
 
         // Shut down our background executor
-        cameraExecutor.shutdown()
+//        cameraExecutor.shutdown()
+
+//        stopTest()
+        if (!cameraExecutor.isShutdown())
+            cameraExecutor.shutdown()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -119,7 +130,7 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         cameraProviderFuture.addListener(
             {
                 // CameraProvider
-                val cameraProvider = cameraProviderFuture.get()
+                cameraProvider = cameraProviderFuture.get()
 
                 // Build and bind the camera use cases
                 bindCameraUseCases(cameraProvider)
@@ -131,9 +142,9 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
     // Declare and bind preview, capture and analysis use cases
     @SuppressLint("UnsafeOptInUsageError")
     private fun bindCameraUseCases(cameraProvider: ProcessCameraProvider) {
-        if(isPaused) return
+//        if(isPaused) return
         // CameraSelector - makes assumption that we're only using the back camera
-        val cameraSelector =
+        cameraSelector =
             CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
 
         // Preview. Only using the 4:3 ratio because this is the closest to our models
@@ -155,11 +166,48 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
                 .setOutputImageFormat(OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .build()
         // The analyzer can then be assigned to the instance
-        imageAnalyzer!!.setAnalyzer(cameraExecutor) { image -> detectObjects(image) }
+//        imageAnalyzer!!.setAnalyzer(cameraExecutor) { image -> detectObjects(image) }
 
         // Must unbind the use-cases before rebinding them
         cameraProvider.unbindAll()
 
+//        try {
+//            // A variable number of use-cases can be passed here -
+//            // camera provides access to CameraControl & CameraInfo
+//            camera = cameraProvider.bindToLifecycle(
+//                this,
+//                cameraSelector,
+//                preview,
+//                imageAnalyzer
+//            )
+//        } catch (exc: Exception) {
+//            Log.e(TAG, "Use case binding failed", exc)
+//        }
+//        startTest()
+    }
+
+    private fun startTest() {
+        handler = Handler(Looper.getMainLooper())
+        val runnable = object: Runnable {
+            override fun run() {
+                handler.postDelayed(this, 10000)
+                if(cnt%2 == 0)
+                    startDetecting()
+                else
+                    stopDetecting()
+                cnt += 1
+            }
+        }
+        handler.post(runnable)
+    }
+
+    private fun stopTest() {
+        handler.removeCallbacksAndMessages(null)
+    }
+
+    private fun startDetecting() {
+        cameraExecutor = Executors.newSingleThreadExecutor()
+        imageAnalyzer!!.setAnalyzer(cameraExecutor) { image -> detectObjects(image) }
         try {
             // A variable number of use-cases can be passed here -
             // camera provides access to CameraControl & CameraInfo
@@ -172,6 +220,12 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         } catch (exc: Exception) {
             Log.e(TAG, "Use case binding failed", exc)
         }
+    }
+
+    private fun stopDetecting() {
+        cameraProvider.unbindAll()
+        imageAnalyzer!!.clearAnalyzer()
+        cameraExecutor.shutdown()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -199,12 +253,14 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
 
     override fun onPause() {
         super.onPause()
-        isPaused = true
+//        isPaused = true
+        stopDetecting()
     }
 
     override fun onResume() {
         super.onResume()
-        isPaused = false
+//        isPaused = false
+        startDetecting()
     }
 
     fun getStartTime(): LocalTime {
@@ -224,7 +280,7 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         imageHeight: Int,
         imageWidth: Int
     ) {
-        if(isPaused) return
+//        if(isPaused) return
         activity?.runOnUiThread {
             // Pass necessary information to OverlayView for drawing on the canvas
             fragmentCameraBinding.overlay.setResults(
@@ -245,7 +301,7 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
                 communicator.controlAudio(true)
 
             } else {
-                if (isPaused) {
+                if (false) {
                     personView.text = "NO MOTORCYCLE"
                     personView.setBackgroundColor(ProjectConfiguration.idleBackgroundColor)
                     personView.setTextColor(ProjectConfiguration.idleTextColor)
