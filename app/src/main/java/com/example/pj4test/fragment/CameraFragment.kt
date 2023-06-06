@@ -18,6 +18,7 @@ package com.example.pj4test.fragment
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.graphics.Bitmap
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -25,6 +26,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -35,6 +37,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.example.pj4test.Communicator
 import com.example.pj4test.ProjectConfiguration
 import java.util.LinkedList
 import java.util.concurrent.ExecutorService
@@ -42,6 +45,8 @@ import java.util.concurrent.Executors
 import com.example.pj4test.cameraInference.PersonClassifier
 import com.example.pj4test.databinding.FragmentCameraBinding
 import org.tensorflow.lite.task.vision.detector.Detection
+import java.time.Duration
+import java.time.LocalTime
 
 class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
     private val TAG = "CameraFragment"
@@ -62,6 +67,10 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
     /** Blocking camera operations are performed using this executor */
     private lateinit var cameraExecutor: ExecutorService
 
+    private lateinit var communicator: Communicator
+    private var isPaused: Boolean = false
+    private lateinit var startTime: LocalTime
+
     override fun onDestroyView() {
         _fragmentCameraBinding = null
         super.onDestroyView()
@@ -70,12 +79,16 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         cameraExecutor.shutdown()
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _fragmentCameraBinding = FragmentCameraBinding.inflate(inflater, container, false)
+
+        communicator = activity as Communicator
+        startTime = LocalTime.now()
 
         return fragmentCameraBinding.root
     }
@@ -118,7 +131,7 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
     // Declare and bind preview, capture and analysis use cases
     @SuppressLint("UnsafeOptInUsageError")
     private fun bindCameraUseCases(cameraProvider: ProcessCameraProvider) {
-
+        if(isPaused) return
         // CameraSelector - makes assumption that we're only using the back camera
         val cameraSelector =
             CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
@@ -184,14 +197,34 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         personClassifier.detect(bitmapBuffer, imageRotation)
     }
 
+    override fun onPause() {
+        super.onPause()
+        isPaused = true
+    }
+
+    override fun onResume() {
+        super.onResume()
+        isPaused = false
+    }
+
+    fun getStartTime(): LocalTime {
+        return startTime
+    }
+
+    fun setStartTime(t: LocalTime) {
+        startTime = t
+    }
+
     // Update UI after objects have been detected. Extracts original image height/width
     // to scale and place bounding boxes properly through OverlayView
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onObjectDetectionResults(
         results: MutableList<Detection>?,
         inferenceTime: Long,
         imageHeight: Int,
         imageWidth: Int
     ) {
+        if(isPaused) return
         activity?.runOnUiThread {
             // Pass necessary information to OverlayView for drawing on the canvas
             fragmentCameraBinding.overlay.setResults(
@@ -208,10 +241,19 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
                 personView.text = "MOTORCYCLE"
                 personView.setBackgroundColor(ProjectConfiguration.activeBackgroundColor)
                 personView.setTextColor(ProjectConfiguration.activeTextColor)
+                onPause()
+                communicator.controlAudio(true)
+
             } else {
                 personView.text = "NO MOTORCYCLE"
                 personView.setBackgroundColor(ProjectConfiguration.idleBackgroundColor)
                 personView.setTextColor(ProjectConfiguration.idleTextColor)
+//                if (Duration.between(LocalTime.now(), startTime).seconds > 10) {
+//                    personView.text = "NO MOTORCYCLE for 10 Seconds"
+//                    onPause()
+//                    communicator.controlAudio(true)
+//                }
+
             }
 
             // Force a redraw

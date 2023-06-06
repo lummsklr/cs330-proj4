@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import com.example.pj4test.Communicator
+import com.example.pj4test.MainActivity
 import com.example.pj4test.ProjectConfiguration
 import com.example.pj4test.audioInference.SnapClassifier
 import com.example.pj4test.databinding.FragmentAudioBinding
@@ -24,12 +26,16 @@ class AudioFragment: Fragment(), SnapClassifier.DetectorListener {
     // views
     lateinit var snapView: TextView
 
+    private lateinit var communicator: Communicator
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _fragmentAudioBinding = FragmentAudioBinding.inflate(inflater, container, false)
+
+        communicator = activity as Communicator
 
         return fragmentAudioBinding.root
     }
@@ -60,6 +66,8 @@ class AudioFragment: Fragment(), SnapClassifier.DetectorListener {
                 snapView.text = "ENGINE SOUND"
                 snapView.setBackgroundColor(ProjectConfiguration.activeBackgroundColor)
                 snapView.setTextColor(ProjectConfiguration.activeTextColor)
+                onPause()
+                communicator.controlCamera(true)
             } else {
                 snapView.text = "NO ENGINE SOUND"
                 snapView.setBackgroundColor(ProjectConfiguration.idleBackgroundColor)
