@@ -35,7 +35,7 @@ class MainActivity : AppCompatActivity(), Communicator {
 
         audioFragment = supportFragmentManager.findFragmentById(R.id.audioFragmentContainerView) as AudioFragment
         cameraFragment = supportFragmentManager.findFragmentById(R.id.cameraFragmentContainerView) as CameraFragment
-        cameraFragment.onPause()
+        //cameraFragment.onPause()
     }
 
     private fun checkPermissions() {
@@ -57,10 +57,10 @@ class MainActivity : AppCompatActivity(), Communicator {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun controlCamera(switch: Boolean) {
         if (switch) {
-            cameraFragment.onResume()
+            cameraFragment.resume()
             cameraFragment.setStartTime(LocalTime.now())
         }
         else
-            cameraFragment.onPause()
+            cameraFragment.pause()
     }
 }

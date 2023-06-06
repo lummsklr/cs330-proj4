@@ -166,7 +166,7 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
                 .setOutputImageFormat(OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .build()
         // The analyzer can then be assigned to the instance
-//        imageAnalyzer!!.setAnalyzer(cameraExecutor) { image -> detectObjects(image) }
+        imageAnalyzer!!.setAnalyzer(cameraExecutor) { image -> detectObjects(image) }
 
         // Must unbind the use-cases before rebinding them
         cameraProvider.unbindAll()
@@ -251,15 +251,25 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         personClassifier.detect(bitmapBuffer, imageRotation)
     }
 
-    override fun onPause() {
-        super.onPause()
-//        isPaused = true
+//    override fun onPause() {
+//        super.onPause()
+////        isPaused = true
+//        stopDetecting()
+//    }
+//
+//    override fun onResume() {
+//        super.onResume()
+////        isPaused = false
+//        startDetecting()
+//    }
+
+    fun pause() {
+        isPaused = true
         stopDetecting()
     }
 
-    override fun onResume() {
-        super.onResume()
-//        isPaused = false
+    fun resume() {
+        isPaused = false
         startDetecting()
     }
 
@@ -297,11 +307,11 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
                 personView.text = "MOTORCYCLE"
                 personView.setBackgroundColor(ProjectConfiguration.activeBackgroundColor)
                 personView.setTextColor(ProjectConfiguration.activeTextColor)
-                onPause()
+                pause()
                 communicator.controlAudio(true)
 
             } else {
-                if (false) {
+                if (isPaused) {
                     personView.text = "NO MOTORCYCLE"
                     personView.setBackgroundColor(ProjectConfiguration.idleBackgroundColor)
                     personView.setTextColor(ProjectConfiguration.idleTextColor)
@@ -313,7 +323,7 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
                     personView.setTextColor(ProjectConfiguration.idleTextColor)
                     if (diff >= 10) {
                         personView.text = "NO MOTORCYCLE for 10 Seconds"
-                        onPause()
+                        pause()
                         communicator.controlAudio(true)
                     }
                 }
