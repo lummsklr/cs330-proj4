@@ -35,6 +35,7 @@ class MainActivity : AppCompatActivity(), Communicator {
 
         audioFragment = supportFragmentManager.findFragmentById(R.id.audioFragmentContainerView) as AudioFragment
         cameraFragment = supportFragmentManager.findFragmentById(R.id.cameraFragmentContainerView) as CameraFragment
+        cameraFragment.onPause()
     }
 
     private fun checkPermissions() {

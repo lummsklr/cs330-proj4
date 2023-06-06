@@ -68,7 +68,7 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
     private lateinit var cameraExecutor: ExecutorService
 
     private lateinit var communicator: Communicator
-    private var isPaused: Boolean = false
+    private var isPaused: Boolean = true
     private lateinit var startTime: LocalTime
 
     override fun onDestroyView() {
@@ -245,14 +245,23 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
                 communicator.controlAudio(true)
 
             } else {
-                personView.text = "NO MOTORCYCLE"
-                personView.setBackgroundColor(ProjectConfiguration.idleBackgroundColor)
-                personView.setTextColor(ProjectConfiguration.idleTextColor)
-//                if (Duration.between(LocalTime.now(), startTime).seconds > 10) {
-//                    personView.text = "NO MOTORCYCLE for 10 Seconds"
-//                    onPause()
-//                    communicator.controlAudio(true)
-//                }
+                if (isPaused) {
+                    personView.text = "NO MOTORCYCLE"
+                    personView.setBackgroundColor(ProjectConfiguration.idleBackgroundColor)
+                    personView.setTextColor(ProjectConfiguration.idleTextColor)
+                }
+                else {
+                    val diff = Duration.between(startTime, LocalTime.now()).seconds
+                    personView.text = "Searching Motorcycle for " + diff + " seconds"
+                    personView.setBackgroundColor(ProjectConfiguration.idleBackgroundColor)
+                    personView.setTextColor(ProjectConfiguration.idleTextColor)
+                    if (diff >= 10) {
+                        personView.text = "NO MOTORCYCLE for 10 Seconds"
+                        onPause()
+                        communicator.controlAudio(true)
+                    }
+                }
+
 
             }
 
