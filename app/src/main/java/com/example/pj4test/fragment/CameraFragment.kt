@@ -82,10 +82,6 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         _fragmentCameraBinding = null
         super.onDestroyView()
 
-        // Shut down our background executor
-//        cameraExecutor.shutdown()
-
-//        stopTest()
         if (!cameraExecutor.isShutdown())
             cameraExecutor.shutdown()
     }
@@ -142,7 +138,6 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
     // Declare and bind preview, capture and analysis use cases
     @SuppressLint("UnsafeOptInUsageError")
     private fun bindCameraUseCases(cameraProvider: ProcessCameraProvider) {
-//        if(isPaused) return
         // CameraSelector - makes assumption that we're only using the back camera
         cameraSelector =
             CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
@@ -170,41 +165,7 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
 
         // Must unbind the use-cases before rebinding them
         cameraProvider.unbindAll()
-
-//        try {
-//            // A variable number of use-cases can be passed here -
-//            // camera provides access to CameraControl & CameraInfo
-//            camera = cameraProvider.bindToLifecycle(
-//                this,
-//                cameraSelector,
-//                preview,
-//                imageAnalyzer
-//            )
-//        } catch (exc: Exception) {
-//            Log.e(TAG, "Use case binding failed", exc)
-//        }
-//        startTest()
     }
-
-    private fun startTest() {
-        handler = Handler(Looper.getMainLooper())
-        val runnable = object: Runnable {
-            override fun run() {
-                handler.postDelayed(this, 10000)
-                if(cnt%2 == 0)
-                    startDetecting()
-                else
-                    stopDetecting()
-                cnt += 1
-            }
-        }
-        handler.post(runnable)
-    }
-
-    private fun stopTest() {
-        handler.removeCallbacksAndMessages(null)
-    }
-
     private fun startDetecting() {
         cameraExecutor = Executors.newSingleThreadExecutor()
         imageAnalyzer!!.setAnalyzer(cameraExecutor) { image -> detectObjects(image) }
@@ -251,18 +212,6 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         personClassifier.detect(bitmapBuffer, imageRotation)
     }
 
-//    override fun onPause() {
-//        super.onPause()
-////        isPaused = true
-//        stopDetecting()
-//    }
-//
-//    override fun onResume() {
-//        super.onResume()
-////        isPaused = false
-//        startDetecting()
-//    }
-
     fun pause() {
         isPaused = true
         stopDetecting()
@@ -272,11 +221,6 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         isPaused = false
         startDetecting()
     }
-
-    fun getStartTime(): LocalTime {
-        return startTime
-    }
-
     fun setStartTime(t: LocalTime) {
         startTime = t
     }
@@ -290,7 +234,6 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         imageHeight: Int,
         imageWidth: Int
     ) {
-//        if(isPaused) return
         activity?.runOnUiThread {
             // Pass necessary information to OverlayView for drawing on the canvas
             fragmentCameraBinding.overlay.setResults(
