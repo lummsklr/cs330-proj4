@@ -75,8 +75,6 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
 
     private lateinit var cameraProvider: ProcessCameraProvider
     private lateinit var cameraSelector: CameraSelector
-    private var cnt: Int = 0
-    private lateinit var handler: Handler
 
     override fun onDestroyView() {
         _fragmentCameraBinding = null
@@ -270,8 +268,6 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
                         communicator.controlAudio(true)
                     }
                 }
-
-
             }
 
             // Force a redraw
