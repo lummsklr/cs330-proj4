@@ -1,11 +1,7 @@
 # CS330 Project4
 
-센서는 항상 on, 머신러닝만 on/off 조절
+Team 57: 20180240 박민준, 20190082 김명규
 
-초기상태: 카메라 off, 오디오 on
+Application Name: Detect Motorcycle
 
-오토바이 소리 인지: 카메라 on, 오디오 off
-
-i) 오토바이 화면 인지: 사진 촬영 후 저장, goto 초기상태
-
-ii) 10초 동안 오토바이 화면 미인지: goto 초기상태
+If you need the sound of a motorcycle engine, I recommend you to use this link: https://youtu.be/5z8f8PG4IEE.
