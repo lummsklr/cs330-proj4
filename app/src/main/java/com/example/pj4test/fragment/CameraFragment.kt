@@ -164,8 +164,12 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
         // Must unbind the use-cases before rebinding them
         cameraProvider.unbindAll()
     }
+
+    //Start detecting: create new thread for imageAnalyzer and bind to lifecycle
     private fun startDetecting() {
+        //Create a new thread for executing imageAnalyzer
         cameraExecutor = Executors.newSingleThreadExecutor()
+        //Allocate a new thread to imageAnalyzer
         imageAnalyzer!!.setAnalyzer(cameraExecutor) { image -> detectObjects(image) }
         try {
             // A variable number of use-cases can be passed here -
@@ -177,13 +181,18 @@ class CameraFragment : Fragment(), PersonClassifier.DetectorListener {
                 imageAnalyzer
             )
         } catch (exc: Exception) {
+            //print error message if case binding failed
             Log.e(TAG, "Use case binding failed", exc)
         }
     }
 
+    //Stop detecting: perform reverse steps of startDetecting
     private fun stopDetecting() {
+        //Unbind imageAnalyzer from lifecycle
         cameraProvider.unbindAll()
+        //Cancel allocation between thread and imageAnalyzer
         imageAnalyzer!!.clearAnalyzer()
+        //Stop the thread used for imageAnalyzer
         cameraExecutor.shutdown()
     }
 
